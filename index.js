@@ -2,6 +2,7 @@ require('dotenv').config();
 const { Client, GatewayIntentBits, Collection, Events } = require('discord.js');
 const fs = require('fs');
 const path = require('path');
+const MusicManager = require('./musicManager');
 
 // Tạo client Discord với các intents cần thiết
 const client = new Client({
@@ -10,11 +11,15 @@ const client = new Client({
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.MessageContent,
+        GatewayIntentBits.GuildVoiceStates,
     ],
 });
 
 // Tạo collection để lưu trữ commands
 client.commands = new Collection();
+
+// Khởi tạo Music Manager
+client.musicManager = new MusicManager(client);
 
 // Load commands từ thư mục commands
 const commandsPath = path.join(__dirname, 'commands');

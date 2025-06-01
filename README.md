@@ -1,8 +1,25 @@
-# Discord Bot
+# Discord Music Bot 🎵
 
-Bot Discord được xây dựng với discord.js v14
+Bot Discord chuyên dụng để phát nhạc từ YouTube với đầy đủ tính năng điều khiển.
 
-## 🚀 Cài đặt và chạy
+## ✨ Tính năng
+
+### 🎵 Phát nhạc
+- `/play <url/tìm kiếm>` - Phát nhạc từ YouTube URL hoặc tìm kiếm theo từ khóa
+- `/pause` - Tạm dừng nhạc
+- `/resume` - Tiếp tục phát nhạc
+- `/stop` - Dừng nhạc và xóa queue
+- `/skip` - Bỏ qua bài hiện tại
+- `/nowplaying` - Xem bài đang phát
+- `/queue` - Xem danh sách nhạc chờ
+- `/leave` - Rời khỏi voice channel
+
+### 🔧 Tiện ích
+- `/ping` - Kiểm tra độ trễ
+- `/help` - Xem danh sách lệnh
+- `/info` - Thông tin về bot
+
+## 🚀 Cài đặt
 
 ### 1. Cài đặt dependencies
 ```bash
@@ -16,7 +33,6 @@ File `.env` đã được thiết lập với:
 - `YOUR_BOT_TOKEN`: Token của bot
 
 ### 3. Deploy slash commands
-Trước khi chạy bot, bạn cần deploy các slash commands:
 ```bash
 node deploy-commands.js
 ```
@@ -25,51 +41,53 @@ node deploy-commands.js
 ```bash
 npm start
 ```
-hoặc
-```bash
-node index.js
-```
 
-## 📋 Commands có sẵn
+## 📋 Yêu cầu hệ thống
 
-- `/ping` - Kiểm tra độ trễ của bot
-- `/info` - Hiển thị thông tin về bot, server hoặc user
-- `/help` - Hiển thị danh sách lệnh
+- Node.js 16.9.0 trở lên
+- FFmpeg (để xử lý audio)
+- Bot cần có quyền:
+  - Connect (kết nối voice channel)
+  - Speak (nói trong voice channel)
+  - Use Slash Commands
 
-## 🔧 Thêm commands mới
+## 🛠️ Dependencies chính
 
-1. Tạo file mới trong thư mục `commands/`
-2. Sử dụng template:
+- `discord.js` - Discord API wrapper
+- `@discordjs/voice` - Voice connection handling
+- `ytdl-core` - YouTube downloader
+- `play-dl` - Multi-platform music streaming
+- `ffmpeg-static` - FFmpeg binary
+- `libsodium-wrappers` - Audio encryption
 
-```javascript
-const { SlashCommandBuilder } = require('discord.js');
+## 🎯 Cách sử dụng
 
-module.exports = {
-    data: new SlashCommandBuilder()
-        .setName('tên-command')
-        .setDescription('Mô tả command'),
-
-    async execute(interaction) {
-        await interaction.reply('Phản hồi của command!');
-    },
-};
-```
-
-3. Chạy lại `node deploy-commands.js` để deploy command mới
-4. Restart bot
+1. Mời bot vào server với đủ quyền
+2. Vào voice channel
+3. Sử dụng `/play <tên bài hát>` để bắt đầu phát nhạc
+4. Sử dụng các lệnh khác để điều khiển
 
 ## 🛠️ Cấu trúc project
 
 ```
 discord-bot/
 ├── commands/           # Thư mục chứa các slash commands
-│   ├── ping.js
-│   ├── info.js
-│   └── help.js
-├── .env               # File cấu hình (chứa tokens)
-├── index.js           # File chính của bot
+│   ├── play.js        # Phát nhạc
+│   ├── stop.js        # Dừng nhạc
+│   ├── pause.js       # Tạm dừng
+│   ├── resume.js      # Tiếp tục
+│   ├── skip.js        # Bỏ qua
+│   ├── queue.js       # Xem queue
+│   ├── nowplaying.js  # Bài đang phát
+│   ├── leave.js       # Rời voice channel
+│   ├── ping.js        # Kiểm tra ping
+│   ├── info.js        # Thông tin
+│   └── help.js        # Trợ giúp
+├── musicManager.js    # Quản lý nhạc và queue
+├── .env              # File cấu hình (chứa tokens)
+├── index.js          # File chính của bot
 ├── deploy-commands.js # Script deploy slash commands
-├── package.json       # Dependencies và scripts
+├── package.json      # Dependencies và scripts
 └── README.md         # Hướng dẫn này
 ```
 
@@ -78,8 +96,9 @@ discord-bot/
 - Không chia sẻ file `.env` hoặc bot token
 - Thêm `.env` vào `.gitignore` nếu sử dụng git
 
-## 📝 Ghi chú
+## 📝 Lưu ý
 
+- Bot chỉ hỗ trợ YouTube hiện tại
+- Queue tự động xóa khi bot rời voice channel
 - Slash commands global có thể mất đến 1 giờ để cập nhật
-- Để test nhanh, có thể deploy commands cho guild cụ thể (xem trong `deploy-commands.js`)
-- Bot cần các permissions phù hợp trong server Discord
+- Để test nhanh, có thể deploy commands cho guild cụ thể

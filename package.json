@@ -7,11 +7,26 @@
     "start": "node index.js",
     "dev": "node index.js"
   },
-  "keywords": ["discord", "bot", "discord.js"],
+  "keywords": [
+    "discord",
+    "bot",
+    "discord.js"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "@discord-player/extractor": "^7.1.0",
+    "@discordjs/opus": "^0.10.0",
+    "@discordjs/voice": "^0.18.0",
+    "discord-player": "^7.1.0",
+    "discord-player-youtubei": "^1.4.6",
     "discord.js": "^14.14.1",
-    "dotenv": "^16.3.1"
+    "dotenv": "^16.3.1",
+    "ffmpeg-static": "^5.2.0",
+    "libsodium-wrappers": "^0.7.15",
+    "play-dl": "^1.9.7",
+    "youtube-ext": "^1.1.25",
+    "youtube-sr": "^4.3.11",
+    "ytdl-core": "^4.11.5"
   }
 }
