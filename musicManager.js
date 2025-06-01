@@ -225,26 +225,28 @@ class MusicManager {
 
             // Thêm track(s) vào queue
             let addedTracks = [];
-            const isPlaylist = searchResult.playlist || searchResult.tracks.length > 1;
+            // Chỉ coi là playlist khi có searchResult.playlist (user đưa link playlist thực sự)
+            // Không coi search results với nhiều tracks là playlist
+            const isPlaylist = !!searchResult.playlist;
 
             if (isPlaylist) {
                 // Playlist - thêm tất cả tracks
                 console.log(`📋 Adding playlist with ${searchResult.tracks.length} tracks`);
-                console.log(`📋 Playlist info:`, searchResult.playlist ? {
+                console.log(`📋 Playlist info:`, {
                     title: searchResult.playlist.title,
                     description: searchResult.playlist.description,
                     url: searchResult.playlist.url
-                } : 'No playlist metadata');
+                });
 
                 await queue.addTrack(searchResult.tracks);
                 addedTracks = searchResult.tracks;
                 console.log(`✅ Added ${searchResult.tracks.length} tracks from playlist`);
             } else {
-                // Single track
+                // Single track - chỉ lấy track đầu tiên từ search results
                 const track = searchResult.tracks[0];
                 await queue.addTrack(track);
                 addedTracks.push(track);
-                console.log(`✅ Added single track: ${track.title}`);
+                console.log(`✅ Added single track: ${track.title} (from ${searchResult.tracks.length} search results)`);
             }
 
             // Phát nhạc nếu chưa phát
