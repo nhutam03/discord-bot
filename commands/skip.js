@@ -1,5 +1,4 @@
 const { SlashCommandBuilder } = require('discord.js');
-const musicManager = require('../musicManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -35,8 +34,8 @@ module.exports = {
             }
 
             // Kiểm tra có nhạc đang phát không
-            const queue = musicManager.getQueue(interaction.guild.id);
-            if (!queue || !queue.currentSong) {
+            const queue = interaction.client.musicManager.getQueue(interaction.guild.id);
+            if (!queue || !queue.currentTrack) {
                 return await interaction.reply({
                     content: '❌ Không có nhạc nào đang phát!',
                     ephemeral: true
@@ -44,10 +43,10 @@ module.exports = {
             }
 
             // Lấy tên bài hiện tại
-            const currentSong = queue.currentSong.title;
+            const currentSong = queue.currentTrack.title;
 
             // Skip bài hiện tại
-            const success = musicManager.skip(interaction.guild.id);
+            const success = interaction.client.musicManager.skip(interaction.guild.id);
             
             if (success) {
                 await interaction.reply({

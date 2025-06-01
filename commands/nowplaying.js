@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const musicManager = require('../musicManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -8,7 +7,7 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            const currentSong = musicManager.getNowPlaying(interaction.guild.id);
+            const currentSong = interaction.client.musicManager.getNowPlaying(interaction.guild.id);
             
             if (!currentSong) {
                 return await interaction.reply({

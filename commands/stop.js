@@ -1,5 +1,4 @@
 const { SlashCommandBuilder } = require('discord.js');
-const musicManager = require('../musicManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -35,7 +34,7 @@ module.exports = {
             }
 
             // Dừng nhạc và xóa queue
-            musicManager.stop(interaction.guild.id);
+            interaction.client.musicManager.stop(interaction.guild.id);
 
             await interaction.reply({
                 content: '⏹️ Đã dừng nhạc và xóa queue!'

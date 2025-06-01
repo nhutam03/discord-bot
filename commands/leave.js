@@ -1,5 +1,4 @@
 const { SlashCommandBuilder } = require('discord.js');
-const musicManager = require('../musicManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -35,7 +34,7 @@ module.exports = {
             }
 
             // Rời khỏi voice channel và dọn dẹp
-            musicManager.leaveChannel(interaction.guild.id);
+            interaction.client.musicManager.leave(interaction.guild.id);
 
             await interaction.reply({
                 content: '👋 Đã rời khỏi voice channel!'

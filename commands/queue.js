@@ -1,5 +1,4 @@
 const { SlashCommandBuilder, EmbedBuilder } = require('discord.js');
-const musicManager = require('../musicManager');
 
 module.exports = {
     data: new SlashCommandBuilder()
@@ -8,8 +7,8 @@ module.exports = {
 
     async execute(interaction) {
         try {
-            const queue = musicManager.getQueue(interaction.guild.id);
-            
+            const queue = interaction.client.musicManager.getQueue(interaction.guild.id);
+
             if (!queue) {
                 return await interaction.reply({
                     content: '❌ Không có queue nào!',
@@ -17,8 +16,8 @@ module.exports = {
                 });
             }
 
-            const currentSong = musicManager.getNowPlaying(interaction.guild.id);
-            const queueList = musicManager.getQueueList(interaction.guild.id);
+            const currentSong = interaction.client.musicManager.getNowPlaying(interaction.guild.id);
+            const queueList = interaction.client.musicManager.getQueueList(interaction.guild.id);
 
             const embed = new EmbedBuilder()
                 .setColor('#0099ff')
