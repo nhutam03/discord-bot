@@ -168,7 +168,7 @@ class PaginationManager {
                 // Vô hiệu hóa tất cả buttons
                 const disabledRow = new ActionRowBuilder();
                 const buttons = createButtons(currentPage, pages.length).components;
-                
+
                 buttons.forEach(button => {
                     disabledRow.addComponents(
                         ButtonBuilder.from(button).setDisabled(true)
@@ -176,15 +176,33 @@ class PaginationManager {
                 });
 
                 if (reason === 'user_closed') {
-                    await interaction.editReply({
-                        content: '✅ Đã đóng pagination.',
-                        embeds: [],
-                        components: []
-                    });
+                    try {
+                        await interaction.editReply({
+                            content: '✅ Đã đóng pagination.',
+                            embeds: [],
+                            components: []
+                        });
+                    } catch (editError) {
+                        // Bỏ qua lỗi ChannelNotCached và các lỗi cache khác
+                        if (editError.code === 'ChannelNotCached' || editError.code === 'UnknownMessage' || editError.code === 'UnknownChannel') {
+                            console.log('⚠️ Pagination message không thể edit (channel/message not cached), bỏ qua...');
+                        } else {
+                            console.error('❌ Lỗi khi edit reply trong pagination end:', editError);
+                        }
+                    }
                 } else {
-                    await interaction.editReply({
-                        components: [disabledRow]
-                    });
+                    try {
+                        await interaction.editReply({
+                            components: [disabledRow]
+                        });
+                    } catch (editError) {
+                        // Bỏ qua lỗi ChannelNotCached và các lỗi cache khác
+                        if (editError.code === 'ChannelNotCached' || editError.code === 'UnknownMessage' || editError.code === 'UnknownChannel') {
+                            console.log('⚠️ Pagination message không thể edit (channel/message not cached), bỏ qua...');
+                        } else {
+                            console.error('❌ Lỗi khi edit reply trong pagination end:', editError);
+                        }
+                    }
                 }
             } catch (error) {
                 console.error('❌ Lỗi khi kết thúc pagination:', error);

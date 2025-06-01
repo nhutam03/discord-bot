@@ -47,6 +47,16 @@ module.exports = {
                     inline: false
                 },
                 {
+                    name: '🗑️ remove',
+                    value: 'Xóa một bài hát khỏi queue theo vị trí',
+                    inline: false
+                },
+                {
+                    name: '🔄 move',
+                    value: 'Di chuyển bài hát từ vị trí này sang vị trí khác',
+                    inline: false
+                },
+                {
                     name: '⏹️ stop',
                     value: 'Dừng nhạc và xóa queue',
                     inline: false

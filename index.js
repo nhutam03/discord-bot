@@ -122,6 +122,25 @@ client.on(Events.MessageCreate, async message => {
                     }
                     return null;
                 },
+                getInteger: (name) => {
+                    // Xử lý integer options cho remove và move commands
+                    if (name === 'position') {
+                        // Cho remove command: tremove 3
+                        const value = parseInt(args[0]);
+                        return isNaN(value) ? null : value;
+                    }
+                    if (name === 'from') {
+                        // Cho move command: tmove 10 2 (from=10, to=2)
+                        const value = parseInt(args[0]);
+                        return isNaN(value) ? null : value;
+                    }
+                    if (name === 'to') {
+                        // Cho move command: tmove 10 2 (from=10, to=2)
+                        const value = parseInt(args[1]);
+                        return isNaN(value) ? null : value;
+                    }
+                    return null;
+                },
                 getSubcommand: () => args[0] || null
             },
 
@@ -153,10 +172,18 @@ client.on(Events.MessageCreate, async message => {
                 if (!mockInteraction.lastReply) {
                     return await mockInteraction.reply(options);
                 }
-                if (typeof options === 'string') {
+                try {
+                    if (typeof options === 'string') {
+                        return await mockInteraction.lastReply.edit(options);
+                    }
                     return await mockInteraction.lastReply.edit(options);
+                } catch (error) {
+                    if (error.code === 'ChannelNotCached' || error.code === 'UnknownMessage' || error.code === 'UnknownChannel') {
+                        console.log('⚠️ Không thể edit reply message (channel/message not cached), gửi message mới...');
+                        return await mockInteraction.reply(options);
+                    }
+                    throw error;
                 }
-                return await mockInteraction.lastReply.edit(options);
             },
 
             followUp: async (options) => {

@@ -392,6 +392,100 @@ class MusicManager {
         }
     }
 
+    // Xóa bài hát khỏi queue theo vị trí
+    removeTrack(guildId, position) {
+        const queue = this.getQueue(guildId);
+        if (!queue || !queue.tracks || queue.tracks.size === 0) {
+            console.log('❌ Cannot remove track: no queue or empty queue');
+            return { success: false, message: 'Queue trống hoặc không tồn tại!' };
+        }
+
+        // Kiểm tra position hợp lệ (1-based index)
+        if (position < 1 || position > queue.tracks.size) {
+            console.log(`❌ Invalid position: ${position}, queue size: ${queue.tracks.size}`);
+            return { success: false, message: `Vị trí không hợp lệ! Chọn từ 1 đến ${queue.tracks.size}` };
+        }
+
+        try {
+            // Chuyển từ 1-based sang 0-based index
+            const index = position - 1;
+            const trackToRemove = queue.tracks.data[index];
+
+            if (!trackToRemove) {
+                return { success: false, message: 'Không tìm thấy bài hát tại vị trí này!' };
+            }
+
+            // Sử dụng discord-player's built-in removeTrack method
+            const removedTrack = queue.removeTrack(trackToRemove);
+
+            if (removedTrack) {
+                console.log(`🗑️ Removed track at position ${position}: ${removedTrack.title}`);
+                return {
+                    success: true,
+                    track: removedTrack,
+                    message: `Đã xóa **${removedTrack.title}** khỏi queue!`
+                };
+            } else {
+                return { success: false, message: 'Không thể xóa bài hát!' };
+            }
+        } catch (error) {
+            console.error('❌ Error removing track:', error);
+            return { success: false, message: 'Có lỗi xảy ra khi xóa bài hát!' };
+        }
+    }
+
+    // Di chuyển bài hát từ vị trí này sang vị trí khác
+    moveTrack(guildId, fromPosition, toPosition) {
+        const queue = this.getQueue(guildId);
+        if (!queue || !queue.tracks || queue.tracks.size === 0) {
+            console.log('❌ Cannot move track: no queue or empty queue');
+            return { success: false, message: 'Queue trống hoặc không tồn tại!' };
+        }
+
+        // Kiểm tra positions hợp lệ (1-based index)
+        if (fromPosition < 1 || fromPosition > queue.tracks.size) {
+            return { success: false, message: `Vị trí nguồn không hợp lệ! Chọn từ 1 đến ${queue.tracks.size}` };
+        }
+
+        if (toPosition < 1 || toPosition > queue.tracks.size) {
+            return { success: false, message: `Vị trí đích không hợp lệ! Chọn từ 1 đến ${queue.tracks.size}` };
+        }
+
+        if (fromPosition === toPosition) {
+            return { success: false, message: 'Vị trí nguồn và đích giống nhau!' };
+        }
+
+        try {
+            // Chuyển từ 1-based sang 0-based index
+            const fromIndex = fromPosition - 1;
+            const toIndex = toPosition - 1;
+
+            console.log(`🔄 Debug moveTrack: fromPosition=${fromPosition}, toPosition=${toPosition}, fromIndex=${fromIndex}, toIndex=${toIndex}`);
+            console.log(`🔄 Queue tracks size: ${queue.tracks.size}, data length: ${queue.tracks.data.length}`);
+
+            const trackToMove = queue.tracks.data[fromIndex];
+            if (!trackToMove) {
+                return { success: false, message: 'Không tìm thấy bài hát tại vị trí nguồn!' };
+            }
+
+            console.log(`🔄 Track to move: ${trackToMove.title}`);
+
+            // Sử dụng discord-player's built-in moveTrack method
+            // moveTrack(track, newIndex) - newIndex là 0-based
+            queue.moveTrack(trackToMove, toIndex);
+
+            console.log(`🔄 Moved track "${trackToMove.title}" from position ${fromPosition} to ${toPosition}`);
+            return {
+                success: true,
+                track: trackToMove,
+                message: `Đã di chuyển **${trackToMove.title}** từ vị trí ${fromPosition} đến vị trí ${toPosition}!`
+            };
+        } catch (error) {
+            console.error('❌ Error moving track:', error);
+            return { success: false, message: 'Có lỗi xảy ra khi di chuyển bài hát!' };
+        }
+    }
+
     // Retry failed track với fallback search
     async retryTrack(queue, failedTrack) {
         try {
