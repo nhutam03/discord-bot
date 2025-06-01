@@ -85,7 +85,17 @@ client.on(Events.MessageCreate, async message => {
 
     // Parse command và arguments
     const args = message.content.slice(prefix.length).trim().split(/ +/);
-    const commandName = args.shift().toLowerCase();
+    let commandName = args.shift().toLowerCase();
+
+    // Command aliases mapping
+    const aliases = {
+        'np': 'nowplaying'
+    };
+
+    // Check if command is an alias
+    if (aliases[commandName]) {
+        commandName = aliases[commandName];
+    }
 
     // Tìm command
     const command = client.commands.get(commandName);
