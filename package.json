@@ -23,6 +23,7 @@
     "discord.js": "^14.14.1",
     "dotenv": "^16.3.1",
     "ffmpeg-static": "^5.2.0",
+    "genius-lyrics": "^4.4.7",
     "libsodium-wrappers": "^0.7.15",
     "play-dl": "^1.9.7",
     "youtube-ext": "^1.1.25",
