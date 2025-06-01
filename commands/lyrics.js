@@ -1,5 +1,6 @@
 const { SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder, ComponentType } = require('discord.js');
 const { Client } = require('genius-lyrics');
+const PaginationManager = require('../utils/pagination');
 
 // Khởi tạo Genius client (có thể sử dụng token hoặc không)
 const genius = new Client();
@@ -147,31 +148,10 @@ module.exports = {
                 });
             }
 
-            // Tạo embed với lời bài hát
-            const embed = new EmbedBuilder()
-                .setColor('#FFD700')
-                .setTitle(`🎵 ${song.title}`)
-                .setAuthor({
-                    name: song.artist.name,
-                    iconURL: song.artist.image || undefined
-                })
-                .setTimestamp()
-                .setFooter({
-                    text: 'Lời bài hát từ Genius',
-                    iconURL: interaction.client.user.displayAvatarURL()
-                });
-
-            // Thêm thumbnail nếu có
-            if (song.image) {
-                embed.setThumbnail(song.image);
-            }
-
-            // Format lời bài hát đẹp hơn (không dùng code block)
-            const maxLength = 4000;
+            // Làm sạch và format lời bài hát
             let lyricsText = lyrics.trim();
 
             // Làm sạch lời bài hát - chỉ loại bỏ metadata ở đầu
-            // Tìm và bắt đầu từ [Verse] hoặc [Intro] đầu tiên
             const firstSectionMatch = lyricsText.match(/\[(Verse|Intro|Chorus|Pre-Chorus|Bridge|Outro)/i);
             if (firstSectionMatch) {
                 const startIndex = lyricsText.indexOf(firstSectionMatch[0]);
@@ -181,29 +161,51 @@ module.exports = {
             // Chỉ loại bỏ các URL nếu có
             lyricsText = lyricsText.replace(/https?:\/\/[^\s]+/g, '');
 
-            if (lyricsText.length > maxLength) {
-                lyricsText = lyricsText.substring(0, maxLength) + '\n\n**[Lời bài hát bị cắt ngắn...]**';
-            }
-
             // Format lời bài hát với các đoạn rõ ràng
             lyricsText = lyricsText
                 .replace(/\[([^\]]+)\]/g, '**[$1]**') // Format [Verse 1], [Chorus] etc.
                 .replace(/\n\n/g, '\n\n') // Giữ nguyên line breaks
                 .trim();
 
-            embed.setDescription(lyricsText);
+            // Kiểm tra độ dài và quyết định có cần pagination không
+            const maxLength = 4000;
 
-            // Thêm link đến Genius
-            embed.addFields({
-                name: '🔗 Xem đầy đủ',
-                value: `[Xem trên Genius](${song.url})`,
-                inline: true
-            });
+            if (lyricsText.length <= maxLength) {
+                // Lời bài hát ngắn - hiển thị bình thường
+                const embed = new EmbedBuilder()
+                    .setColor('#FFD700')
+                    .setTitle(`🎵 ${song.title}`)
+                    .setAuthor({
+                        name: song.artist.name,
+                        iconURL: song.artist.image || undefined
+                    })
+                    .setDescription(lyricsText)
+                    .setTimestamp()
+                    .setFooter({
+                        text: 'Lời bài hát từ Genius',
+                        iconURL: interaction.client.user.displayAvatarURL()
+                    });
 
-            await interaction.editReply({
-                embeds: [embed],
-                components: []
-            });
+                // Thêm thumbnail nếu có
+                if (song.image) {
+                    embed.setThumbnail(song.image);
+                }
+
+                // Thêm link đến Genius
+                embed.addFields({
+                    name: '🔗 Xem đầy đủ',
+                    value: `[Xem trên Genius](${song.url})`,
+                    inline: true
+                });
+
+                await interaction.editReply({
+                    embeds: [embed],
+                    components: []
+                });
+            } else {
+                // Lời bài hát dài - sử dụng pagination
+                await this.createPaginatedLyrics(interaction, song, lyricsText);
+            }
 
         } catch (error) {
             console.error('❌ Lỗi khi hiển thị lời bài hát:', error);
@@ -213,5 +215,53 @@ module.exports = {
                 components: []
             });
         }
+    },
+
+    async createPaginatedLyrics(interaction, song, lyricsText) {
+        const pagination = new PaginationManager();
+        const maxLength = 3800; // Để lại chỗ cho footer và các thông tin khác
+
+        // Chia lời bài hát thành các trang
+        const lyricsChunks = pagination.chunkText(lyricsText, maxLength);
+
+        // Tạo các embed pages
+        const pages = lyricsChunks.map((chunk, index) => {
+            const embed = new EmbedBuilder()
+                .setColor('#FFD700')
+                .setTitle(`🎵 ${song.title}`)
+                .setAuthor({
+                    name: song.artist.name,
+                    iconURL: song.artist.image || undefined
+                })
+                .setDescription(chunk)
+                .setTimestamp()
+                .setFooter({
+                    text: 'Lời bài hát từ Genius',
+                    iconURL: interaction.client.user.displayAvatarURL()
+                });
+
+            // Thêm thumbnail vào trang đầu tiên
+            if (index === 0 && song.image) {
+                embed.setThumbnail(song.image);
+            }
+
+            // Thêm link đến Genius vào trang cuối
+            if (index === lyricsChunks.length - 1) {
+                embed.addFields({
+                    name: '🔗 Xem đầy đủ',
+                    value: `[Xem trên Genius](${song.url})`,
+                    inline: true
+                });
+            }
+
+            return embed;
+        });
+
+        // Tạo pagination
+        await pagination.createPagination(interaction, pages, {
+            timeout: 600000, // 10 phút cho lyrics
+            showPageNumbers: true,
+            showFirstLast: true
+        });
     }
 };

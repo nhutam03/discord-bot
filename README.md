@@ -10,14 +10,23 @@ Bot Discord chuyên dụng để phát nhạc từ YouTube với đầy đủ t�
 - `/resume` - Tiếp tục phát nhạc
 - `/stop` - Dừng nhạc và xóa queue
 - `/skip` - Bỏ qua bài hiện tại
+- `/shuffle` - Trộn thứ tự playlist (đã sửa lỗi)
 - `/nowplaying` - Xem bài đang phát
-- `/queue` - Xem danh sách nhạc chờ
+- `/queue` - Xem danh sách nhạc chờ (có phân trang cho queue dài)
+- `/lyrics [tên bài]` - Xem lời bài hát (có phân trang cho lời dài)
 - `/leave` - Rời khỏi voice channel
 
 ### 🔧 Tiện ích
 - `/ping` - Kiểm tra độ trễ
 - `/help` - Xem danh sách lệnh
 - `/info` - Thông tin về bot
+
+### 📄 Tính năng phân trang
+- **Queue dài**: Tự động chia thành nhiều trang (10 bài/trang)
+- **Lời bài hát dài**: Tự động chia thành nhiều trang
+- **Navigation**: Sử dụng nút ⏮️ ◀️ ▶️ ⏭️ để điều hướng
+- **Đóng**: Nút ❌ để đóng pagination
+- **Timeout**: Tự động hết hạn sau 5-10 phút
 
 ## 🚀 Cài đặt
 
@@ -57,6 +66,7 @@ npm start
 - `@discordjs/voice` - Voice connection handling
 - `ytdl-core` - YouTube downloader
 - `play-dl` - Multi-platform music streaming
+- `genius-lyrics` - Lấy lời bài hát từ Genius
 - `ffmpeg-static` - FFmpeg binary
 - `libsodium-wrappers` - Audio encryption
 
@@ -77,12 +87,16 @@ discord-bot/
 │   ├── pause.js       # Tạm dừng
 │   ├── resume.js      # Tiếp tục
 │   ├── skip.js        # Bỏ qua
-│   ├── queue.js       # Xem queue
+│   ├── shuffle.js     # Trộn playlist
+│   ├── queue.js       # Xem queue (có pagination)
+│   ├── lyrics.js      # Xem lời bài hát (có pagination)
 │   ├── nowplaying.js  # Bài đang phát
 │   ├── leave.js       # Rời voice channel
 │   ├── ping.js        # Kiểm tra ping
 │   ├── info.js        # Thông tin
 │   └── help.js        # Trợ giúp
+├── utils/             # Thư mục tiện ích
+│   └── pagination.js  # Hệ thống phân trang
 ├── musicManager.js    # Quản lý nhạc và queue
 ├── .env              # File cấu hình (chứa tokens)
 ├── index.js          # File chính của bot

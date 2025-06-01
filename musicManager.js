@@ -7,11 +7,20 @@ class MusicManager {
             ytdlOptions: {
                 quality: 'highestaudio',
                 highWaterMark: 1 << 25,
-                filter: 'audioonly'
+                filter: 'audioonly',
+                requestOptions: {
+                    headers: {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                    }
+                }
             },
-            // Configure for ytdl-core
+            // Configure for better compatibility
             useLegacyFFmpeg: false,
-            skipFFmpeg: false
+            skipFFmpeg: false,
+            connectionTimeout: 30000, // Tăng timeout
+            lagMonitor: 30000,
+            // Thêm fallback options
+            overrideFallbackContext: true
         });
 
         // Setup player asynchronously
@@ -21,50 +30,142 @@ class MusicManager {
     async setupPlayer() {
         // Load extractors for discord-player v7
         try {
-            // Load YouTube extractor first
+            // Load YouTube extractor first với retry mechanism
+            let youtubeLoaded = false;
             try {
                 const { YoutubeiExtractor } = require('discord-player-youtubei');
                 await this.player.extractors.register(YoutubeiExtractor, {
-                    authentication: process.env.YOUTUBE_COOKIE || undefined
+                    authentication: process.env.YOUTUBE_COOKIE || undefined,
+                    // Thêm options để tăng tính ổn định
+                    streamOptions: {
+                        useClient: 'ANDROID',
+                        highWaterMark: 1 << 25
+                    }
                 });
                 console.log('✅ YouTube extractor loaded successfully');
+                youtubeLoaded = true;
             } catch (ytError) {
                 console.log('⚠️ YouTube extractor failed to load:', ytError.message);
+                console.log('🔄 Will try to use default YouTube support...');
             }
 
             // Load default extractors
-            const { DefaultExtractors } = require('@discord-player/extractor');
-            await this.player.extractors.loadMulti(DefaultExtractors);
-            console.log('✅ Default extractors loaded successfully');
+            try {
+                const { DefaultExtractors } = require('@discord-player/extractor');
+                await this.player.extractors.loadMulti(DefaultExtractors);
+                console.log('✅ Default extractors loaded successfully');
+            } catch (defaultError) {
+                console.error('❌ Failed to load default extractors:', defaultError);
+
+                // Fallback: Load individual extractors
+                console.log('🔄 Trying to load individual extractors...');
+                try {
+                    const { AttachmentExtractor } = require('@discord-player/extractor');
+                    await this.player.extractors.register(AttachmentExtractor);
+                    console.log('✅ Attachment extractor loaded');
+                } catch (attachError) {
+                    console.log('⚠️ Attachment extractor failed:', attachError.message);
+                }
+            }
+
+            // Log loaded extractors
+            console.log('📋 Loaded extractors:', this.player.extractors.store.map(e => e.identifier));
 
         } catch (error) {
             console.error('❌ Failed to load extractors:', error);
+            console.log('⚠️ Bot will continue with limited functionality');
         }
 
         // Player events
         this.player.events.on('playerStart', (queue, track) => {
+            console.log(`🎵 Started playing: ${track.title} by ${track.author}`);
             queue.metadata.channel.send(`🎵 Đang phát: **${track.title}** - ${track.author}`);
         });
 
         this.player.events.on('audioTrackAdd', (queue, track) => {
-            queue.metadata.channel.send(`✅ Đã thêm **${track.title}** vào queue!`);
+            console.log(`✅ Track added to queue: ${track.title}`);
+            // Không gửi message ở đây vì play command sẽ xử lý việc hiển thị
+        });
+
+        this.player.events.on('audioTracksAdd', (queue, tracks) => {
+            console.log(`✅ Multiple tracks added to queue: ${tracks.length} tracks`);
+            // Không gửi message ở đây vì play command sẽ xử lý việc hiển thị
         });
 
         this.player.events.on('disconnect', (queue) => {
+            console.log('👋 Disconnected from voice channel');
             queue.metadata.channel.send('👋 Đã ngắt kết nối khỏi voice channel!');
         });
 
         this.player.events.on('emptyChannel', (queue) => {
+            console.log('❌ Voice channel is empty');
             queue.metadata.channel.send('❌ Voice channel trống, bot sẽ rời sau 5 phút!');
         });
 
         this.player.events.on('emptyQueue', (queue) => {
+            console.log('✅ Queue is empty');
             queue.metadata.channel.send('✅ Queue đã hết, bot sẽ rời voice channel!');
         });
 
         this.player.events.on('error', (queue, error) => {
-            console.log(`❌ Lỗi player: ${error.message}`);
+            console.error(`❌ Player error: ${error.message}`, error);
             queue.metadata.channel.send(`❌ Có lỗi xảy ra: ${error.message}`);
+        });
+
+        // Thêm event listener cho playerError để tránh UnhandledEventsWarning
+        this.player.events.on('playerError', (queue, error) => {
+            console.error(`❌ Player error occurred:`, {
+                message: error.message,
+                code: error.code,
+                timestamp: error.timestamp,
+                track: queue.currentTrack ? {
+                    title: queue.currentTrack.title,
+                    url: queue.currentTrack.url,
+                    extractor: queue.currentTrack.extractor?.identifier
+                } : null
+            });
+
+            // Thử skip track hiện tại nếu có lỗi stream
+            if (error.code === 'ERR_NO_RESULT' || error.message.includes('Could not extract stream')) {
+                console.log('🔄 Attempting to handle problematic track...');
+
+                if (queue.currentTrack) {
+                    const failedTrack = queue.currentTrack;
+                    queue.metadata.channel.send(`❌ Không thể phát **${failedTrack.title}**. Đang tìm bài thay thế...`);
+
+                    // Thử tìm track thay thế
+                    setTimeout(async () => {
+                        try {
+                            const retrySuccess = await this.retryTrack(queue, failedTrack);
+
+                            if (retrySuccess) {
+                                queue.metadata.channel.send(`🔄 Đã tìm thấy bài thay thế cho **${failedTrack.title}**!`);
+                            } else {
+                                queue.metadata.channel.send(`❌ Không tìm thấy bài thay thế. Đang chuyển sang bài tiếp theo...`);
+                            }
+
+                            // Skip track hiện tại
+                            if (queue.tracks.data.length > 0) {
+                                queue.node.skip();
+                            } else {
+                                queue.metadata.channel.send('❌ Không có bài nào khác trong queue!');
+                            }
+                        } catch (skipError) {
+                            console.error('❌ Error while handling failed track:', skipError);
+                            queue.metadata.channel.send('❌ Có lỗi xảy ra khi xử lý track!');
+                        }
+                    }, 1000);
+                } else {
+                    queue.metadata.channel.send(`❌ Có lỗi xảy ra khi phát nhạc: ${error.message}`);
+                }
+            } else {
+                queue.metadata.channel.send(`❌ Có lỗi xảy ra: ${error.message}`);
+            }
+        });
+
+        // Thêm event listener cho track skip
+        this.player.events.on('playerSkip', (queue, track) => {
+            console.log(`⏭️ Skipped track: ${track.title}`);
         });
     }
 
@@ -86,6 +187,7 @@ class MusicManager {
             console.log(`📊 Search result:`, {
                 hasTracks: searchResult.hasTracks(),
                 tracksCount: searchResult.tracks?.length || 0,
+                playlist: searchResult.playlist || null,
                 firstTrack: searchResult.tracks?.[0] ? {
                     title: searchResult.tracks[0].title,
                     author: searchResult.tracks[0].author,
@@ -122,22 +224,78 @@ class MusicManager {
             }
 
             // Thêm track(s) vào queue
-            const track = searchResult.tracks[0];
-            await queue.addTrack(track);
+            let addedTracks = [];
+            const isPlaylist = searchResult.playlist || searchResult.tracks.length > 1;
+
+            if (isPlaylist) {
+                // Playlist - thêm tất cả tracks
+                console.log(`📋 Adding playlist with ${searchResult.tracks.length} tracks`);
+                console.log(`📋 Playlist info:`, searchResult.playlist ? {
+                    title: searchResult.playlist.title,
+                    description: searchResult.playlist.description,
+                    url: searchResult.playlist.url
+                } : 'No playlist metadata');
+
+                await queue.addTrack(searchResult.tracks);
+                addedTracks = searchResult.tracks;
+                console.log(`✅ Added ${searchResult.tracks.length} tracks from playlist`);
+            } else {
+                // Single track
+                const track = searchResult.tracks[0];
+                await queue.addTrack(track);
+                addedTracks.push(track);
+                console.log(`✅ Added single track: ${track.title}`);
+            }
 
             // Phát nhạc nếu chưa phát
-            if (!queue.isPlaying()) await queue.node.play();
+            if (!queue.isPlaying()) {
+                try {
+                    await queue.node.play();
+                    console.log('🎵 Started playing queue');
+                } catch (playError) {
+                    console.error('❌ Error starting playback:', playError);
 
-            console.log(`✅ Track added:`, {
-                title: track.title,
-                author: track.author,
-                duration: track.duration
+                    // Nếu lỗi stream, thử với track khác
+                    if (playError.code === 'ERR_NO_RESULT' || playError.message.includes('Could not extract stream')) {
+                        console.log('🔄 Stream error detected, will be handled by playerError event');
+                        // playerError event sẽ xử lý việc skip track
+                    } else {
+                        throw playError;
+                    }
+                }
+            }
+
+            console.log(`✅ Track(s) added:`, {
+                count: addedTracks.length,
+                firstTrack: addedTracks[0] ? {
+                    title: addedTracks[0].title,
+                    author: addedTracks[0].author,
+                    duration: addedTracks[0].duration,
+                    url: addedTracks[0].url,
+                    extractor: addedTracks[0].extractor?.identifier
+                } : null
             });
 
-            return track;
+            // Return object with track info and playlist info
+            return {
+                track: addedTracks[0] || null,
+                isPlaylist: isPlaylist,
+                totalTracks: addedTracks.length,
+                playlist: searchResult.playlist || null
+            };
 
         } catch (error) {
             console.error('❌ Lỗi trong play:', error);
+
+            // Cleanup nếu có lỗi
+            if (error.message.includes('Connection') || error.message.includes('Voice')) {
+                try {
+                    this.player.nodes.delete(interaction.guild.id);
+                } catch (cleanupError) {
+                    console.error('❌ Error during cleanup:', cleanupError);
+                }
+            }
+
             throw error;
         }
     }
@@ -204,6 +362,79 @@ class MusicManager {
     getQueueList(guildId) {
         const queue = this.getQueue(guildId);
         return queue ? queue.tracks.data : [];
+    }
+
+    // Trộn playlist (sử dụng discord-player built-in shuffle)
+    shuffle(guildId) {
+        const queue = this.getQueue(guildId);
+        if (!queue || !queue.tracks || queue.tracks.size < 2) {
+            console.log('❌ Cannot shuffle: insufficient tracks or no queue');
+            return false;
+        }
+
+        // Log trước khi shuffle để debug
+        const beforeShuffle = queue.tracks.data.map((t, i) => `${i}: ${t.title}`);
+        console.log('🔀 Before shuffle:', beforeShuffle);
+
+        try {
+            // Sử dụng built-in shuffle method của discord-player
+            queue.tracks.shuffle();
+
+            // Log sau khi shuffle để debug
+            const afterShuffle = queue.tracks.data.map((t, i) => `${i}: ${t.title}`);
+            console.log('🔀 After shuffle:', afterShuffle);
+            console.log(`🔀 Successfully shuffled ${queue.tracks.size} tracks`);
+
+            return true;
+        } catch (error) {
+            console.error('❌ Error shuffling queue:', error);
+            return false;
+        }
+    }
+
+    // Retry failed track với fallback search
+    async retryTrack(queue, failedTrack) {
+        try {
+            console.log(`🔄 Retrying track: ${failedTrack.title}`);
+
+            // Thử search lại với query khác
+            const fallbackQueries = [
+                `${failedTrack.cleanTitle || failedTrack.title}`, // Clean title
+                `${failedTrack.author} ${failedTrack.title}`, // Author + title
+                failedTrack.title.split(' - ')[0], // Phần đầu của title
+                failedTrack.title.replace(/\(.*?\)/g, '').trim() // Bỏ ngoặc đơn
+            ];
+
+            for (const query of fallbackQueries) {
+                try {
+                    console.log(`🔍 Trying fallback search: "${query}"`);
+                    const searchResult = await this.player.search(query, {
+                        requestedBy: failedTrack.requestedBy,
+                        searchEngine: 'auto'
+                    });
+
+                    if (searchResult.hasTracks()) {
+                        const newTrack = searchResult.tracks[0];
+                        // Kiểm tra track mới có khác track cũ không
+                        if (newTrack.url !== failedTrack.url) {
+                            await queue.addTrack(newTrack);
+                            console.log(`✅ Found alternative track: ${newTrack.title}`);
+                            return true;
+                        }
+                    }
+                } catch (searchError) {
+                    console.log(`⚠️ Fallback search failed for "${query}":`, searchError.message);
+                    continue;
+                }
+            }
+
+            console.log(`❌ No alternative found for: ${failedTrack.title}`);
+            return false;
+
+        } catch (error) {
+            console.error('❌ Error in retryTrack:', error);
+            return false;
+        }
     }
 }
 

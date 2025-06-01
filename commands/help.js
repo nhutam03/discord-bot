@@ -9,71 +9,76 @@ module.exports = {
         const embed = new EmbedBuilder()
             .setColor(0xFFD700)
             .setTitle('📚 Danh sách lệnh')
-            .setDescription('Dưới đây là các lệnh bạn có thể sử dụng:')
+            .setDescription('Dưới đây là các lệnh bạn có thể sử dụng:\n\n**Cách sử dụng:**\n• Slash commands: `/help`\n• Prefix commands: `thelp`')
             .addFields(
                 {
-                    name: '🏓 /ping',
+                    name: '🏓 ping',
                     value: 'Kiểm tra độ trễ của bot',
                     inline: false
                 },
                 {
-                    name: 'ℹ️ /info',
+                    name: 'ℹ️ info',
                     value: 'Hiển thị thông tin về bot, server hoặc user',
                     inline: false
                 },
                 {
-                    name: '🎵 /play',
+                    name: '🎵 play',
                     value: 'Phát nhạc từ YouTube, Spotify, SoundCloud',
                     inline: false
                 },
                 {
-                    name: '⏸️ /pause',
+                    name: '⏸️ pause',
                     value: 'Tạm dừng nhạc đang phát',
                     inline: false
                 },
                 {
-                    name: '▶️ /resume',
+                    name: '▶️ resume',
                     value: 'Tiếp tục phát nhạc',
                     inline: false
                 },
                 {
-                    name: '⏭️ /skip',
+                    name: '⏭️ skip',
                     value: 'Bỏ qua bài hiện tại',
                     inline: false
                 },
                 {
-                    name: '⏹️ /stop',
+                    name: '🔀 shuffle',
+                    value: 'Trộn thứ tự playlist',
+                    inline: false
+                },
+                {
+                    name: '⏹️ stop',
                     value: 'Dừng nhạc và xóa queue',
                     inline: false
                 },
                 {
-                    name: '🎵 /nowplaying',
+                    name: '🎵 nowplaying',
                     value: 'Xem bài đang phát',
                     inline: false
                 },
                 {
-                    name: '📋 /queue',
-                    value: 'Xem danh sách nhạc chờ',
+                    name: '📋 queue',
+                    value: 'Xem danh sách nhạc chờ (có phân trang cho queue dài)',
                     inline: false
                 },
                 {
-                    name: '📝 /lyrics',
-                    value: 'Xem lời bài hát đang phát hoặc tìm kiếm',
+                    name: '📝 lyrics',
+                    value: 'Xem lời bài hát đang phát hoặc tìm kiếm (có phân trang cho lời dài)',
                     inline: false
                 },
                 {
-                    name: '🚪 /leave',
+                    name: '🚪 leave',
                     value: 'Bot rời khỏi voice channel',
                     inline: false
                 },
                 {
-                    name: '❓ /help',
+                    name: '❓ help',
                     value: 'Hiển thị danh sách lệnh này',
                     inline: false
                 }
             )
-            .setFooter({ 
-                text: 'Sử dụng / để xem các lệnh có sẵn',
+            .setFooter({
+                text: 'Sử dụng / hoặc prefix t để xem các lệnh có sẵn',
                 iconURL: interaction.client.user.displayAvatarURL()
             })
             .setTimestamp();
