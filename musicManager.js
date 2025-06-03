@@ -31,30 +31,30 @@ class MusicManager {
         // Load extractors for discord-player v7
         try {
             // Load YouTube extractor first với retry mechanism
-            let youtubeLoaded = false;
-            try {
-                const { YoutubeiExtractor } = require('discord-player-youtubei');
-                await this.player.extractors.register(YoutubeiExtractor, {
-                    //authentication: process.env.YOUTUBE_ACCESS_TOKEN, 
-                    authentication: process.env.YOUTUBE_COOKIE || undefined,
-                    // apiKey: process.env.YOUTUBE_API_KEY || undefined,
-                    // oauth: {
-                    //     clientId: process.env.YOUTUBE_OAUTH_CLIENT_ID || undefined,
-                    //     clientSecret: process.env.YOUTUBE_OAUTH_CLIENT_SECRET || undefined
-                    // },
-                    generateWithPoToken: true,
-                    streamOptions: {
-                        useClient: 'ANDROID',
-                        highWaterMark: 1 << 25
-                    },
-                    //cookie: process.env.YOUTUBE_COOKIE || undefined,
-                });
-                console.log('✅ YouTube extractor loaded successfully');
-                youtubeLoaded = true;
-            } catch (ytError) {
-                console.log('⚠️ YouTube extractor failed to load:', ytError.message);
-                console.log('🔄 Will try to use default YouTube support...');
-            }
+            // let youtubeLoaded = false;
+            // try {
+            //     const { YoutubeiExtractor } = require('discord-player-youtubei');
+            //     await this.player.extractors.register(YoutubeiExtractor, {
+            //         //authentication: process.env.YOUTUBE_ACCESS_TOKEN, 
+            //         authentication: process.env.YOUTUBE_COOKIE || undefined,
+            //         // apiKey: process.env.YOUTUBE_API_KEY || undefined,
+            //         // oauth: {
+            //         //     clientId: process.env.YOUTUBE_OAUTH_CLIENT_ID || undefined,
+            //         //     clientSecret: process.env.YOUTUBE_OAUTH_CLIENT_SECRET || undefined
+            //         // },
+            //         generateWithPoToken: true,
+            //         streamOptions: {
+            //             useClient: 'ANDROID',
+            //             highWaterMark: 1 << 25
+            //         },
+            //         //cookie: process.env.YOUTUBE_COOKIE || undefined,
+            //     });
+            //     console.log('✅ YouTube extractor loaded successfully');
+            //     youtubeLoaded = true;
+            // } catch (ytError) {
+            //     console.log('⚠️ YouTube extractor failed to load:', ytError.message);
+            //     console.log('🔄 Will try to use default YouTube support...');
+            // }
 
             // Load default extractors
             try {
