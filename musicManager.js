@@ -42,6 +42,7 @@ class MusicManager {
                     //     clientId: process.env.YOUTUBE_OAUTH_CLIENT_ID || undefined,
                     //     clientSecret: process.env.YOUTUBE_OAUTH_CLIENT_SECRET || undefined
                     // },
+                    generateWithPoToken: true,
                     streamOptions: {
                         useClient: 'ANDROID',
                         highWaterMark: 1 << 25
