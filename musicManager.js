@@ -36,7 +36,7 @@ class MusicManager {
                 const { YoutubeiExtractor } = require('discord-player-youtubei');
                 await this.player.extractors.register(YoutubeiExtractor, {
                     authentication: process.env.YOUTUBE_COOKIE || undefined,
-                    // Thêm options để tăng tính ổn định
+                    apiKey: process.env.YOUTUBE_API_KEY || undefined,
                     streamOptions: {
                         useClient: 'ANDROID',
                         highWaterMark: 1 << 25
