@@ -37,6 +37,10 @@ class MusicManager {
                 await this.player.extractors.register(YoutubeiExtractor, {
                     authentication: process.env.YOUTUBE_COOKIE || undefined,
                     apiKey: process.env.YOUTUBE_API_KEY || undefined,
+                    oauth: {
+                        clientId: process.env.YOUTUBE_OAUTH_CLIENT_ID || undefined,
+                        clientSecret: process.env.YOUTUBE_OAUTH_CLIENT_SECRET || undefined
+                    },
                     streamOptions: {
                         useClient: 'ANDROID',
                         highWaterMark: 1 << 25
