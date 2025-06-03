@@ -36,7 +36,7 @@ class MusicManager {
                 const { YoutubeiExtractor } = require('discord-player-youtubei');
                 await this.player.extractors.register(YoutubeiExtractor, {
                     //authentication: process.env.YOUTUBE_ACCESS_TOKEN, 
-                    //authentication: process.env.YOUTUBE_COOKIE || undefined,
+                    authentication: process.env.YOUTUBE_COOKIE || undefined,
                     // apiKey: process.env.YOUTUBE_API_KEY || undefined,
                     // oauth: {
                     //     clientId: process.env.YOUTUBE_OAUTH_CLIENT_ID || undefined,
@@ -46,7 +46,7 @@ class MusicManager {
                         useClient: 'ANDROID',
                         highWaterMark: 1 << 25
                     },
-                    cookie: process.env.YOUTUBE_COOKIE || undefined,
+                    //cookie: process.env.YOUTUBE_COOKIE || undefined,
                 });
                 console.log('✅ YouTube extractor loaded successfully');
                 youtubeLoaded = true;
