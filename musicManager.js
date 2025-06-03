@@ -535,3 +535,5 @@ class MusicManager {
 }
 
 module.exports = MusicManager;
+
+process.env.FFMPEG_PATH = require('ffmpeg-static');
