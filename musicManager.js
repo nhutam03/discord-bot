@@ -35,7 +35,7 @@ class MusicManager {
             try {
                 const { YoutubeiExtractor } = require('discord-player-youtubei');
                 await this.player.extractors.register(YoutubeiExtractor, {
-                    // authentication: process.env.YOUTUBE_COOKIE || undefined,
+                    authentication: process.env.YOUTUBE_COOKIE || undefined,
                     apiKey: process.env.YOUTUBE_API_KEY || undefined,
                     oauth: {
                         clientId: process.env.YOUTUBE_OAUTH_CLIENT_ID || undefined,
